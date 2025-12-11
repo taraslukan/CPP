@@ -1,154 +1,207 @@
 #include "Fixed.hpp"
+#include <iostream>
 #include <cmath>
 
 const int Fixed::_fractionalBits = 8;
 
-Fixed::Fixed() : _rawBits(0)
-{
-}
+// ==== Orthodox Canonical Form ====
 
-Fixed::Fixed(const int value)
+Fixed::Fixed()
+    : _rawValue(0)
 {
-	this->_rawBits = value << _fractionalBits;
-}
-
-Fixed::Fixed(const float value)
-{
-	this->_rawBits = static_cast<int>(roundf(value * (1 << _fractionalBits)));
+    std::cout << "Default constructor called" << std::endl;
 }
 
 Fixed::Fixed(const Fixed &other)
 {
-	*this = other;
+    std::cout << "Copy constructor called" << std::endl;
+    *this = other;
 }
 
 Fixed &Fixed::operator=(const Fixed &other)
 {
-	if (this != &other)
-		this->_rawBits = other._rawBits;
-	return *this;
+    std::cout << "Copy assignment operator called" << std::endl;
+    if (this != &other)
+        this->_rawValue = other._rawValue;
+    return (*this);
 }
 
 Fixed::~Fixed()
 {
+    std::cout << "Destructor called" << std::endl;
 }
+
+// ==== Costruttori numerici ====
+
+Fixed::Fixed(const int value)
+{
+    std::cout << "Int constructor called" << std::endl;
+    this->_rawValue = value << _fractionalBits;
+}
+
+Fixed::Fixed(const float value)
+{
+    std::cout << "Float constructor called" << std::endl;
+    this->_rawValue = static_cast<int>(
+        std::roundf(value * (1 << _fractionalBits))
+    );
+}
+
+// ==== Conversioni ====
 
 float Fixed::toFloat(void) const
 {
-	return static_cast<float>(this->_rawBits) / (1 << _fractionalBits);
+    return (static_cast<float>(this->_rawValue) / (1 << _fractionalBits));
 }
 
 int Fixed::toInt(void) const
 {
-	return this->_rawBits >> _fractionalBits;
+    return (this->_rawValue >> _fractionalBits);
 }
 
-// comparison operators
+// ==== Getter/Setter raw ====
+
+int Fixed::getRawBits(void) const
+{
+    std::cout << "getRawBits member function called" << std::endl;
+    return (this->_rawValue);
+}
+
+void Fixed::setRawBits(int const raw)
+{
+    std::cout << "setRawBits member function called" << std::endl;
+    this->_rawValue = raw;
+}
+
+// ==== Operatore << ====
+
+std::ostream &operator<<(std::ostream &os, const Fixed &fixed)
+{
+    os << fixed.toFloat();
+    return (os);
+}
+
+// ==== Operatori di confronto ====
+// Confrontiamo direttamente i raw value: hanno stessa scala (2^8)
 
 bool Fixed::operator>(const Fixed &other) const
 {
-	return this->_rawBits > other._rawBits;
+    return (this->_rawValue > other._rawValue);
 }
 
 bool Fixed::operator<(const Fixed &other) const
 {
-	return this->_rawBits < other._rawBits;
+    return (this->_rawValue < other._rawValue);
 }
 
 bool Fixed::operator>=(const Fixed &other) const
 {
-	return this->_rawBits >= other._rawBits;
+    return (this->_rawValue >= other._rawValue);
 }
 
 bool Fixed::operator<=(const Fixed &other) const
 {
-	return this->_rawBits <= other._rawBits;
+    return (this->_rawValue <= other._rawValue);
 }
 
 bool Fixed::operator==(const Fixed &other) const
 {
-	return this->_rawBits == other._rawBits;
+    return (this->_rawValue == other._rawValue);
 }
 
 bool Fixed::operator!=(const Fixed &other) const
 {
-	return this->_rawBits != other._rawBits;
+    return (this->_rawValue != other._rawValue);
 }
 
-// arithmetic operators
+// ==== Operatori aritmetici ====
+// Usiamo la rappresentazione raw, facendo attenzione ai bit frazionari.
 
 Fixed Fixed::operator+(const Fixed &other) const
 {
-	return Fixed(this->toFloat() + other.toFloat());
+    Fixed result;
+    result._rawValue = this->_rawValue + other._rawValue;
+    return (result);
 }
 
 Fixed Fixed::operator-(const Fixed &other) const
 {
-	return Fixed(this->toFloat() - other.toFloat());
+    Fixed result;
+    result._rawValue = this->_rawValue - other._rawValue;
+    return (result);
 }
 
 Fixed Fixed::operator*(const Fixed &other) const
 {
-	return Fixed(this->toFloat() * other.toFloat());
+    Fixed result;
+    // Moltiplicazione: (rawA * rawB) / 2^fractionalBits
+    long tmp = static_cast<long>(this->_rawValue)
+             * static_cast<long>(other._rawValue);
+    result._rawValue = static_cast<int>(tmp >> _fractionalBits);
+    return (result);
 }
 
 Fixed Fixed::operator/(const Fixed &other) const
 {
-	return Fixed(this->toFloat() / other.toFloat());
+    Fixed result;
+    // Divisione: (rawA * 2^fractionalBits) / rawB
+    long numerator = (static_cast<long>(this->_rawValue) << _fractionalBits);
+    // Nota: nessun controllo division by zero (il subject non lo richiede esplicitamente)
+    result._rawValue = static_cast<int>(numerator / other._rawValue);
+    return (result);
 }
 
-// increment / decrement
+// ==== Incremento / Decremento ====
+// Incrementiamo/decrementiamo di 1 unità di rawValue = 1 / 2^fractionalBits
 
+// pre-incremento: modifica e ritorna *this
 Fixed &Fixed::operator++()
 {
-	this->_rawBits++;
-	return *this;
+    ++this->_rawValue;
+    return (*this);
 }
 
+// post-incremento: salva copia, incrementa, ritorna copia
 Fixed Fixed::operator++(int)
 {
-	Fixed tmp(*this);
-	this->_rawBits++;
-	return tmp;
+    Fixed tmp(*this);
+    ++this->_rawValue;
+    return (tmp);
 }
 
+// pre-decremento
 Fixed &Fixed::operator--()
 {
-	this->_rawBits--;
-	return *this;
+    --this->_rawValue;
+    return (*this);
 }
 
+// post-decremento
 Fixed Fixed::operator--(int)
 {
-	Fixed tmp(*this);
-	this->_rawBits--;
-	return tmp;
+    Fixed tmp(*this);
+    --this->_rawValue;
+    return (tmp);
 }
 
-// min / max
+// ==== Funzioni statiche min / max ====
 
 Fixed &Fixed::min(Fixed &a, Fixed &b)
 {
-	return (a < b) ? a : b;
+    return (a < b ? a : b);
 }
 
-const Fixed &Fixed::min(const Fixed &a, const Fixed &b)
+Fixed const &Fixed::min(Fixed const &a, Fixed const &b)
 {
-	return (a < b) ? a : b;
+    return (a < b ? a : b);
 }
 
 Fixed &Fixed::max(Fixed &a, Fixed &b)
 {
-	return (a > b) ? a : b;
+    return (a > b ? a : b);
 }
 
-const Fixed &Fixed::max(const Fixed &a, const Fixed &b)
+Fixed const &Fixed::max(Fixed const &a, Fixed const &b)
 {
-	return (a > b) ? a : b;
-}
-
-std::ostream &operator<<(std::ostream &os, Fixed const &fixed)
-{
-	os << fixed.toFloat();
-	return os;
+    return (a > b ? a : b);
 }

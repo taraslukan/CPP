@@ -5,31 +5,34 @@
 
 int main()
 {
-	PhoneBook first;
-	int choice = 0;
-	bool looper = true;
+	PhoneBook   first;
+	std::string command;
+	bool        looper = true;
 
 	while (looper)
 	{
-		std::cout << "Hi, what can I do?" << std::endl;
-		std::cout << "1 --> ADD Contact\n2 --> SEARCH Contact\n3 --> EXIT" << std::endl;
-		std::cin >> choice;
-
-		while (!(choice == 1 || choice == 2 || choice == 3))
+		std::cout << "Enter command (ADD, SEARCH, EXIT): ";
+		if (!std::getline(std::cin, command))
 		{
-			std::cout << "Invalid option. Please choose 1, 2 or 3." << std::endl;
-			std::cin >> choice;
+			// EOF (Ctrl+D) o errore input → usciamo puliti
+			std::cout << std::endl << "Input terminated." << std::endl;
+			break;
 		}
 
-		if (choice == 1)
+		if (command == "ADD")
 			first.addContact();
-		else if (choice == 2)
+		else if (command == "SEARCH")
 			first.searchContact();
-		else if (choice == 3)
+		else if (command == "EXIT")
 		{
 			std::cout << "Goodbye!" << std::endl;
 			looper = false;
 		}
+		else
+		{
+			std::cout << "Invalid command. Please type ADD, SEARCH or EXIT." << std::endl;
+		}
 	}
 	return 0;
 }
+

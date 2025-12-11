@@ -1,9 +1,9 @@
 #include "phonebook.hpp"
 #include <iostream>
 #include <iomanip>
-#include <limits>
+#include <cstdlib>
 
-// funzione helper per leggere una stringa non vuota
+// helper: legge una stringa non vuota
 static std::string prompt(const std::string &msg)
 {
 	std::string input;
@@ -13,8 +13,7 @@ static std::string prompt(const std::string &msg)
 		std::cout << msg;
 		if (!std::getline(std::cin, input))
 		{
-			// EOF o errore: usciamo in modo pulito
-			std::cout << "\nInput terminated." << std::endl;
+			std::cout << std::endl << "Input terminated." << std::endl;
 			std::exit(0);
 		}
 		if (!input.empty())
@@ -23,7 +22,7 @@ static std::string prompt(const std::string &msg)
 	}
 }
 
-// stampa una colonna larga 10 caratteri, tronca con '.' se troppo lunga
+// helper: stampa una colonna larga 10 caratteri
 static void printColumn(const std::string &str)
 {
 	if (str.length() > 10)
@@ -38,10 +37,6 @@ PhoneBook::PhoneBook() : index(0)
 
 void PhoneBook::addContact()
 {
-	// siccome nel main usi 'std::cin >> choice', c'è un '\n' rimasto nel buffer:
-	// svuotiamo il resto della riga PRIMA di usare getline.
-	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
 	Contact &c = this->user[this->index];
 
 	c.setName(prompt("First name: "));
@@ -52,20 +47,17 @@ void PhoneBook::addContact()
 
 	std::cout << "Contact saved in slot " << this->index << "." << std::endl;
 
-	this->index = (this->index + 1) % 8; // ruota fra 0 e 7
+	this->index = (this->index + 1) % 8; // ruota 0..7
 }
 
 void PhoneBook::searchContact()
 {
-	// svuota eventuale '\n' rimasto se arriviamo qui dopo '>>'
-	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
 	std::cout << "---------------------------------------------" << std::endl;
 	std::cout << "|     Index| FirstName| LastName | Nickname |" << std::endl;
 	std::cout << "---------------------------------------------" << std::endl;
 
 	bool any = false;
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 8; ++i)
 	{
 		if (this->user[i].isEmpty())
 			continue;
@@ -80,6 +72,7 @@ void PhoneBook::searchContact()
 		printColumn(this->user[i].getNickname());
 		std::cout << "|" << std::endl;
 	}
+
 	std::cout << "---------------------------------------------" << std::endl;
 
 	if (!any)
@@ -92,7 +85,7 @@ void PhoneBook::searchContact()
 	std::cout << "Enter index (0-7): ";
 	if (!std::getline(std::cin, idxStr))
 	{
-		std::cout << "\nInput terminated." << std::endl;
+		std::cout << std::endl << "Input terminated." << std::endl;
 		std::exit(0);
 	}
 
